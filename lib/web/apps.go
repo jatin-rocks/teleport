@@ -24,6 +24,7 @@ import (
 	"context"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/gravitational/trace"
 	"github.com/julienschmidt/httprouter"
@@ -149,9 +150,10 @@ func (h *Handler) getAppDetails(w http.ResponseWriter, r *http.Request, p httpro
 	clusterName := p.ByName("clusterName")
 
 	req := GetAppDetailsRequest{
-		FQDNHint:    p.ByName("fqdnHint"),
-		ClusterName: clusterName,
-		PublicAddr:  p.ByName("publicAddr"),
+		FQDNHint:        p.ByName("fqdnHint"),
+		ClusterName:     clusterName,
+		PublicAddr:      p.ByName("publicAddr"),
+		RequestHostname: r.Host,
 	}
 
 	// Use the information the caller provided to attempt to resolve to an
@@ -161,8 +163,16 @@ func (h *Handler) getAppDetails(w http.ResponseWriter, r *http.Request, p httpro
 		return nil, trace.Wrap(err, "unable to resolve FQDN: %v", req.FQDNHint)
 	}
 
+	fqdn := result.FQDN
+
+	proxyPublicAddr := utils.InferProxyPublicAddr(req.FQDNHint, h.proxyDNSNames(), h.proxyDNSName())
+	if result.App.GetAlwaysUseProxyPublicAddr() {
+		appName := strings.TrimSuffix(req.FQDNHint, proxyPublicAddr)
+		fqdn = utils.AssembleAppFQDN(appName, proxyPublicAddr, clusterName, result.App)
+	}
+
 	resp := &GetAppDetailsResponse{
-		FQDN: result.FQDN,
+		FQDN: fqdn,
 	}
 
 	requiredAppNames := result.App.GetRequiredAppNames()
@@ -182,10 +192,11 @@ func (h *Handler) getAppDetails(w http.ResponseWriter, r *http.Request, p httpro
 				h.logger.ErrorContext(r.Context(), "Error getting app details for associated required app", "required_app", required, "app", result.App.GetName())
 				continue
 			}
-			resp.RequiredAppFQDNs = append(resp.RequiredAppFQDNs, res.FQDN)
+			requiredFQDN := utils.AssembleAppFQDN(res.App.GetName(), proxyPublicAddr, clusterName, result.App)
+			resp.RequiredAppFQDNs = append(resp.RequiredAppFQDNs, requiredFQDN)
 		}
 		// append self to end of required apps so that it can be the final entry in the redirect "chain".
-		resp.RequiredAppFQDNs = append(resp.RequiredAppFQDNs, result.FQDN)
+		resp.RequiredAppFQDNs = append(resp.RequiredAppFQDNs, resp.FQDN)
 	}
 
 	return resp, nil
@@ -300,6 +311,8 @@ type ResolveAppParams struct {
 
 	// AppName is the name of the application
 	AppName string `json:"app_name,omitempty"`
+
+	RequestHostname string
 }
 
 type resolveAppResult struct {
@@ -351,7 +364,10 @@ func (h *Handler) resolveApp(ctx context.Context, scx *SessionContext, params Re
 		return nil, trace.Wrap(err)
 	}
 
-	fqdn := utils.AssembleAppFQDN(h.auth.clusterName, h.proxyDNSName(), appClusterName, server.GetApp())
+	resolvedApp := server.GetApp()
+
+	proxyPublicAddr := utils.InferProxyPublicAddr(params.FQDNHint, h.proxyDNSNames(), h.proxyDNSName())
+	fqdn := utils.AssembleAppFQDN(h.auth.clusterName, proxyPublicAddr, appClusterName, resolvedApp)
 
 	return &resolveAppResult{
 		ServerID:    server.GetName(),
