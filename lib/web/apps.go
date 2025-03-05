@@ -165,7 +165,8 @@ func (h *Handler) getAppDetails(w http.ResponseWriter, r *http.Request, p httpro
 	fqdn := result.FQDN
 
 	proxyPublicAddr := utils.InferProxyPublicAddr(req.FQDNHint, h.proxyDNSNames(), h.proxyDNSName())
-	if result.App.GetAlwaysUseProxyPublicAddr() {
+	alwaysUseProxyPublicAddr := result.App.GetAlwaysUseProxyPublicAddr()
+	if alwaysUseProxyPublicAddr {
 		appName := strings.TrimSuffix(req.FQDNHint, proxyPublicAddr)
 		fqdn = utils.AssembleAppFQDN(appName, proxyPublicAddr, clusterName, result.App)
 	}
@@ -191,8 +192,12 @@ func (h *Handler) getAppDetails(w http.ResponseWriter, r *http.Request, p httpro
 				h.logger.ErrorContext(r.Context(), "Error getting app details for associated required app", "required_app", required, "app", result.App.GetName())
 				continue
 			}
-			requiredFQDN := utils.AssembleAppFQDN(res.App.GetName(), proxyPublicAddr, clusterName, result.App)
-			resp.RequiredAppFQDNs = append(resp.RequiredAppFQDNs, requiredFQDN)
+			if alwaysUseProxyPublicAddr {
+				requiredFQDN := utils.AssembleAppFQDN(res.App.GetName(), proxyPublicAddr, clusterName, result.App)
+				resp.RequiredAppFQDNs = append(resp.RequiredAppFQDNs, requiredFQDN)
+			} else {
+				resp.RequiredAppFQDNs = append(resp.RequiredAppFQDNs, res.FQDN)
+			}
 		}
 		// append self to end of required apps so that it can be the final entry in the redirect "chain".
 		resp.RequiredAppFQDNs = append(resp.RequiredAppFQDNs, resp.FQDN)
