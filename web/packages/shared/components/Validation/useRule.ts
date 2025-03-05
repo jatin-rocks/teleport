@@ -18,21 +18,14 @@
 
 import { useEffect, useState } from 'react';
 
-import Logger from '../../libs/logger';
+import { ValidationResult } from './rules';
 import { useValidation } from './Validation';
-
-const logger = Logger.create('validation');
 
 /**
  * useRule subscribes to validation requests upon which executes validate() callback
  */
-export default function useRule(cb) {
-  if (typeof cb !== 'function') {
-    logger.warn(`useRule(fn), fn() must be a function`);
-    return;
-  }
-
-  const [, rerender] = useState();
+export default function useRule(cb: () => ValidationResult): ValidationResult {
+  const [, rerender] = useState({});
   const validator = useValidation();
 
   // register to validation context to be called on cb()
