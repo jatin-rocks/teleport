@@ -39,6 +39,7 @@ import {
   StandardEditorModel,
 } from './standardmodel';
 import { StandardModelDispatcher } from './useStandardModel';
+import { validateRoleEditorModel } from './validation';
 
 export type StandardEditorProps = {
   originalRole?: RoleWithYaml;
@@ -82,7 +83,18 @@ export const StandardEditor = ({
   }
 
   function handleSave() {
-    if (!validator.validate()) {
+    const newModel = produce(standardEditorModel.roleModel, rm => {
+      for (const r of rm.resources) {
+        r.suspendValidation = false;
+      }
+    });
+    dispatch({ type: 'set-role-model', payload: newModel });
+    const newValidationResult = validateRoleEditorModel(
+      newModel,
+      standardEditorModel.roleModel,
+      standardEditorModel.validationResult
+    );
+    if (!newValidationResult.isValid) {
       return;
     }
     onSave?.(roleEditorModelToRole(standardEditorModel.roleModel));

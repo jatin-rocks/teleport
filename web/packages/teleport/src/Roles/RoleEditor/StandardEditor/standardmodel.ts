@@ -124,6 +124,7 @@ type ResourceAccessBase<T extends ResourceAccessKind> = {
    * this one.
    */
   kind: T;
+  suspendValidation: boolean;
 };
 
 export type ResourceAccessKind =
@@ -315,6 +316,7 @@ export type RuleModel = {
   resources: readonly ResourceKindOption[];
   verbs: readonly VerbOption[];
   where: string;
+  suspendValidation: boolean;
 };
 
 export type OptionsModel = {
@@ -483,6 +485,7 @@ export function newResourceAccess(
         kind: 'node',
         labels: [],
         logins: [stringToOption('{{internal.logins}}')],
+        suspendValidation: true,
       };
     case 'kube_cluster':
       return {
@@ -492,6 +495,7 @@ export function newResourceAccess(
         resources: [],
         users: [],
         roleVersion,
+        suspendValidation: true,
       };
     case 'app':
       return {
@@ -500,6 +504,7 @@ export function newResourceAccess(
         awsRoleARNs: ['{{internal.aws_role_arns}}'],
         azureIdentities: ['{{internal.azure_identities}}'],
         gcpServiceAccounts: ['{{internal.gcp_service_accounts}}'],
+        suspendValidation: true,
       };
     case 'db':
       return {
@@ -509,17 +514,20 @@ export function newResourceAccess(
         users: [stringToOption('{{internal.db_users}}')],
         roles: [stringToOption('{{internal.db_roles}}')],
         dbServiceLabels: [],
+        suspendValidation: true,
       };
     case 'windows_desktop':
       return {
         kind: 'windows_desktop',
         labels: [],
         logins: [stringToOption('{{internal.windows_logins}}')],
+        suspendValidation: true,
       };
     case 'git_server':
       return {
         kind: 'git_server',
         organizations: [stringToOption('{{internal.github_orgs}}')],
+        suspendValidation: true,
       };
     default:
       kind satisfies never;
@@ -545,6 +553,7 @@ export function newRuleModel(): RuleModel {
     resources: [],
     verbs: [],
     where: '',
+    suspendValidation: true,
   };
 }
 

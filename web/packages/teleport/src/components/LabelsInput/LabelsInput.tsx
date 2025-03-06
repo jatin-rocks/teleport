@@ -45,7 +45,7 @@ export type LabelInputTexts = {
   placeholder: string;
 };
 
-type LabelListValidationResult = ValidationResult & {
+export type LabelListValidationResult = ValidationResult & {
   /**
    * A list of validation results, one per label. Note: items are optional just
    * because `useRule` by default returns only `ValidationResult`. For the

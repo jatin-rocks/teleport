@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import styled, { useTheme } from 'styled-components';
 
 import Box from 'design/Box';
