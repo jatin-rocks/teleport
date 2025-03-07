@@ -19,26 +19,19 @@
 import { Option } from 'shared/components/Select';
 import {
   arrayOf,
-  ArrayValidationResult,
   requiredField,
-  Rule,
   RuleSetValidationResult,
   runRules,
   ValidationResult,
 } from 'shared/components/Validation/rules';
 
-import {
-  Label,
-  LabelListValidationResult,
-  nonEmptyLabels,
-} from 'teleport/components/LabelsInput/LabelsInput';
+import { nonEmptyLabels } from 'teleport/components/LabelsInput/LabelsInput';
 import {
   KubernetesResourceKind,
   RoleVersion,
 } from 'teleport/services/resources';
 
 import {
-  KubernetesAccess,
   KubernetesResourceModel,
   KubernetesVerbOption,
   MetadataModel,
@@ -160,11 +153,7 @@ export function validateResourceAccess(
   const { kind } = resource;
   switch (kind) {
     case 'kube_cluster':
-      return runFieldValidators(
-        resource,
-        kubernetesAccessFieldValidators,
-        resource.suspendValidation
-      );
+      return runRules(resource, kubernetesAccessValidationRules);
     case 'node':
       return runRules(resource, serverAccessValidationRules);
     case 'app':
@@ -180,77 +169,6 @@ export function validateResourceAccess(
   }
 }
 
-type FieldValidator<T, R = ValidationResult> = (
-  value: T,
-  suspended: boolean
-) => R;
-
-export type FieldValidatorSet<K extends string | number | symbol> = Record<
-  K,
-  FieldValidator<any, any>
->;
-
-// type FieldValidatorResult<FV extends FieldValidator> = ReturnType<FV>;
-
-export type FieldValidatorSetResult<R extends FieldValidatorSet<any>> = {
-  valid: boolean;
-  /**
-   * Each member of the `fields` object corresponds to a rule from within the
-   * rule set and contains the result of validating a model field of the same
-   * name.
-   */
-  fields: { [k in keyof R]: ReturnType<R[k]> }; // Record<keyof R, ValidationResult>;
-};
-
-export const runFieldValidators = <K extends string, M extends Record<K, any>>(
-  model: M,
-  validators: FieldValidatorSet<K>,
-  suspended: boolean
-): FieldValidatorSetResult<FieldValidatorSet<K>> => {
-  const fields = {} as {
-    [k in keyof FieldValidatorSet<K>]: ReturnType<FieldValidatorSet<K>[k]>;
-  };
-  let valid = true;
-  for (const key in validators) {
-    const modelValue = model[key];
-    fields[key] = validators[key](modelValue, suspended);
-    valid &&= fields[key].valid;
-  }
-  return { fields, valid };
-};
-
-const suspendable = rule => {
-  return val => {
-    const fn = rule(val);
-    return (suspended: boolean) => (suspended ? { valid: true } : fn());
-  };
-};
-
-/** Validates an array by executing given rule on each of its elements. */
-const arrayValidatorOf =
-  <T, R extends ValidationResult>(
-    elementRule: FieldValidator<T, R>
-  ): Rule<T[], ArrayValidationResult<R>> =>
-  (values: T[]) =>
-  () => {
-    const results = values.map(v => suspendable(elementRule)(v)());
-    return { results: results, valid: results.every(r => r.valid) };
-  };
-
-const nonEmptyLabelsValidator: FieldValidator<
-  Label[],
-  LabelListValidationResult
-> = (labels: Label[], suspended: boolean) => {
-  const results = labels.map(label => ({
-    name: suspendable(requiredField('required'))(label.name)(suspended),
-    value: suspendable(requiredField('required'))(label.value)(suspended),
-  }));
-  return {
-    valid: results.every(r => r.name.valid && r.value.valid),
-    results: results,
-  };
-};
-
 export type ResourceAccessValidationResult =
   | ServerAccessValidationResult
   | KubernetesAccessValidationResult
@@ -259,19 +177,16 @@ export type ResourceAccessValidationResult =
   | WindowsDesktopAccessValidationResult
   | GitHubOrganizationAccessValidationResult;
 
-const validKubernetesResource = (
-  res: KubernetesResourceModel,
-  suspended: boolean
-) => {
-  const kind = validKubernetesKind(res.kind.value, res.roleVersion, suspended);
-  const name = suspendable(
-    requiredField('Resource name is required, use "*" for any resource')
-  )(res.name)(suspended);
+const validKubernetesResource = (res: KubernetesResourceModel) => () => {
+  const kind = validKubernetesKind(res.kind.value, res.roleVersion);
+  const name = requiredField(
+    'Resource name is required, use "*" for any resource'
+  )(res.name)();
   const namespace = kubernetesClusterWideResourceKinds.includes(res.kind.value)
     ? { valid: true }
-    : suspendable(
-        requiredField('Namespace is required for resources of this kind')
-      )(res.namespace)(suspended);
+    : requiredField('Namespace is required for resources of this kind')(
+        res.namespace
+      )();
   const verbs = validKubernetesVerbs(res.verbs);
   return {
     valid: kind.valid && name.valid && namespace.valid && verbs.valid,
@@ -295,13 +210,8 @@ export type KubernetesResourceValidationResult = {
  */
 const validKubernetesKind = (
   kind: KubernetesResourceKind,
-  ver: RoleVersion,
-  suspended: boolean
+  ver: RoleVersion
 ): ValidationResult => {
-  if (suspended) {
-    return { valid: true };
-  }
-
   switch (ver) {
     case RoleVersion.V3:
     case RoleVersion.V4:
@@ -337,12 +247,12 @@ const validKubernetesVerbs = (
   };
 };
 
-const kubernetesAccessFieldValidators = {
-  labels: nonEmptyLabelsValidator,
-  resources: arrayValidatorOf(validKubernetesResource),
+const kubernetesAccessValidationRules = {
+  labels: nonEmptyLabels,
+  resources: arrayOf(validKubernetesResource),
 };
-export type KubernetesAccessValidationResult = FieldValidatorSetResult<
-  typeof kubernetesAccessFieldValidators
+export type KubernetesAccessValidationResult = RuleSetValidationResult<
+  typeof kubernetesAccessValidationRules
 >;
 
 const noWildcard = (message: string) => (value: string) => () => {

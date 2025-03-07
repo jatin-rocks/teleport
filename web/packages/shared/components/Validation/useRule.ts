@@ -47,7 +47,7 @@ export default function useRule(cb: () => ValidationResult): ValidationResult {
     }
 
     return cleanup;
-  }, [cb]);
+  }, [cb, validator]);
 
   // if validation has been requested, cb right away.
   if (validator.state.validating) {

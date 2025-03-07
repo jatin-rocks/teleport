@@ -180,3 +180,10 @@ export function useValidation(): Validator {
   }
   return useStore(validator);
 }
+
+export function ValidationSuspender({
+  suspend,
+  children,
+}: React.PropsWithChildren<{ suspend?: boolean }>) {
+  return suspend ? <Validation>{children}</Validation> : children;
+}

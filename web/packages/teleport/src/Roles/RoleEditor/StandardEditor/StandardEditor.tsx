@@ -83,18 +83,14 @@ export const StandardEditor = ({
   }
 
   function handleSave() {
+    validator.validate();
     const newModel = produce(standardEditorModel.roleModel, rm => {
       for (const r of rm.resources) {
         r.suspendValidation = false;
       }
     });
     dispatch({ type: 'set-role-model', payload: newModel });
-    const newValidationResult = validateRoleEditorModel(
-      newModel,
-      standardEditorModel.roleModel,
-      standardEditorModel.validationResult
-    );
-    if (!newValidationResult.isValid) {
+    if (!standardEditorModel.validationResult.isValid) {
       return;
     }
     onSave?.(roleEditorModelToRole(standardEditorModel.roleModel));
