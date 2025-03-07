@@ -46,7 +46,7 @@ type FieldSelectWrapperPropsBase<Opt, IsMulti extends boolean> = {
   required?: boolean;
   helperText?: React.ReactNode;
   value?: OnChangeValue<Opt, IsMulti>;
-  rule?: Rule<OnChangeValue<Opt, IsMulti>>; // (options: OnChangeValue<Opt, IsMulti>) => () => unknown;
+  rule?: Rule<OnChangeValue<Opt, IsMulti>>;
   inputId?: string;
   markAsError?: boolean;
 };

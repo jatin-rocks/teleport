@@ -90,6 +90,7 @@ describe('ServerAccessSection', () => {
         expect.objectContaining({ label: 'root', value: 'root' }),
         expect.objectContaining({ label: 'some-user', value: 'some-user' }),
       ],
+      suspendValidation: true,
     } as ServerAccess);
   });
 
@@ -193,6 +194,7 @@ describe('KubernetesAccessSection', () => {
         expect.objectContaining({ value: 'mary' }),
       ],
       roleVersion: 'v7',
+      suspendValidation: true,
     } as KubernetesAccess);
   });
 
@@ -280,13 +282,16 @@ describe('KubernetesAccessSection', () => {
 });
 
 describe('AppAccessSection', () => {
-  const setup = () => {
+  const setup = (model: Partial<AppAccess> = {}) => {
     const onChange = jest.fn();
     let validator: Validator;
     render(
       <StatefulSection<AppAccess, ResourceAccessValidationResult>
         component={AppAccessSection}
-        defaultValue={newResourceAccess('app', defaultRoleVersion)}
+        defaultValue={{
+          ...newResourceAccess('app', defaultRoleVersion),
+          ...model,
+        }}
         onChange={onChange}
         validatorRef={v => {
           validator = v;
@@ -352,6 +357,7 @@ describe('AppAccessSection', () => {
         '{{internal.gcp_service_accounts}}',
         'admin@some-project.iam.gserviceaccount.com',
       ],
+      suspendValidation: true,
     } as AppAccess);
   });
 
@@ -383,6 +389,15 @@ describe('AppAccessSection', () => {
     expect(gcpServiceAccountTextBoxes()[1]).toHaveAccessibleDescription(
       'Wildcard is not allowed in GCP service accounts'
     );
+  });
+
+  test('suspended validation', async () => {
+    const { user, validator } = setup({ suspendValidation: true });
+    await user.click(screen.getByRole('button', { name: 'Add a Label' }));
+    act(() => validator.validate());
+    expect(
+      screen.getByPlaceholderText('label key')
+    ).not.toHaveAccessibleDescription('required');
   });
 });
 
@@ -447,6 +462,7 @@ describe('DatabaseAccessSection', () => {
         expect.objectContaining({ label: 'mary', value: 'mary' }),
       ],
       dbServiceLabels: [{ name: 'foo', value: 'bar' }],
+      suspendValidation: true,
     } as DatabaseAccess);
   });
 
@@ -509,6 +525,7 @@ describe('WindowsDesktopAccessSection', () => {
         expect.objectContaining({ value: '{{internal.windows_logins}}' }),
         expect.objectContaining({ label: 'julio', value: 'julio' }),
       ],
+      suspendValidation: true,
     } as WindowsDesktopAccess);
   });
 
@@ -558,6 +575,7 @@ describe('GitHubOrganizationAccessSection', () => {
         expect.objectContaining({ value: '{{internal.github_orgs}}' }),
         expect.objectContaining({ label: 'illuminati', value: 'illuminati' }),
       ],
+      suspendValidation: true,
     } as GitHubOrganizationAccess);
   });
 });

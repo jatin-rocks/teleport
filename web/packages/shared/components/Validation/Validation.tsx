@@ -181,9 +181,11 @@ export function useValidation(): Validator {
   return useStore(validator);
 }
 
+/** Conditionally suspends showing validation errors for all the children. */
 export function ValidationSuspender({
   suspend,
   children,
 }: React.PropsWithChildren<{ suspend?: boolean }>) {
+  // The trick is to simply substitute the current validator with a new one.
   return suspend ? <Validation>{children}</Validation> : children;
 }

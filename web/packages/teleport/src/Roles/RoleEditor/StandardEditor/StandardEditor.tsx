@@ -39,7 +39,6 @@ import {
   StandardEditorModel,
 } from './standardmodel';
 import { StandardModelDispatcher } from './useStandardModel';
-import { validateRoleEditorModel } from './validation';
 
 export type StandardEditorProps = {
   originalRole?: RoleWithYaml;
@@ -86,6 +85,9 @@ export const StandardEditor = ({
     validator.validate();
     const newModel = produce(standardEditorModel.roleModel, rm => {
       for (const r of rm.resources) {
+        r.suspendValidation = false;
+      }
+      for (const r of rm.rules) {
         r.suspendValidation = false;
       }
     });

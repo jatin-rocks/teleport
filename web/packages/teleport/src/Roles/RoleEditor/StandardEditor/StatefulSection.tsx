@@ -20,9 +20,10 @@ import React, { useReducer } from 'react';
 
 import Validation, { Validator } from 'shared/components/Validation';
 
+import { ResourceAccessSection } from './Resources';
 import { SectionProps, SectionPropsWithDispatch } from './sections';
 import { defaultRoleVersion, StandardEditorModel } from './standardmodel';
-import { useStandardModel } from './useStandardModel';
+import { StandardModelDispatcher, useStandardModel } from './useStandardModel';
 import { withDefaults } from './withDefaults';
 
 /** A helper for testing editor section components. */
@@ -88,17 +89,20 @@ export function StatefulSectionWithDispatch<Model, ValidationResult>({
   component: Component,
   validatorRef,
   modelRef,
+  dispatchRef,
 }: {
   selector(m: StandardEditorModel): Model;
   validationSelector(m: StandardEditorModel): ValidationResult;
   component: React.ComponentType<SectionPropsWithDispatch<Model, any>>;
   validatorRef?(v: Validator): void;
   modelRef?(m: Model): void;
+  dispatchRef?(d: StandardModelDispatcher): void;
 }) {
   const [state, dispatch] = useStandardModel(minimalRole);
   const model = selector(state);
   const validation = validationSelector(state);
   modelRef?.(model);
+  dispatchRef?.(dispatch);
   return (
     <Validation>
       {({ validator }) => {

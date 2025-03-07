@@ -33,7 +33,6 @@ import {
   FieldSelectCreatable,
 } from 'shared/components/FieldSelect';
 import { MenuButton, MenuItem } from 'shared/components/MenuAction';
-import Validation from 'shared/components/Validation';
 import { precomputed } from 'shared/components/Validation/rules';
 import { ValidationSuspender } from 'shared/components/Validation/Validation';
 
