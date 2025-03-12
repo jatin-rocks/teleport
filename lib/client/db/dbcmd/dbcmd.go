@@ -252,6 +252,24 @@ func (c *CLICommandBuilder) GetConnectCommandAlternatives(ctx context.Context) (
 	return []CommandAlternative{{Description: "default command", Command: cmd}}, nil
 }
 
+// GetExecCommand returns a command that can connect the user directly to the given database
+// using an appropriate CLI database client and execute the provided query.
+func (c *CLICommandBuilder) GetExecCommand(ctx context.Context, query string) (*exec.Cmd, error) {
+	if !c.options.noTLS || c.options.localProxyHost == "" {
+		return nil, trace.BadParameter("query commands can only be used in authenticated local proxy")
+	}
+
+	switch c.db.Protocol {
+	case defaults.ProtocolPostgres:
+		return c.getPostgresExecCommand(ctx, query)
+
+	case defaults.ProtocolMySQL:
+		return c.getMySQLExecCommand(ctx, query)
+	default:
+		return nil, trace.BadParameter("unsupported database protocol: %v", c.db)
+	}
+}
+
 func (c *CLICommandBuilder) getPostgresCommand() *exec.Cmd {
 	return exec.Command(postgresBin, c.getPostgresConnString())
 }
