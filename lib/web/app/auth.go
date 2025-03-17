@@ -231,7 +231,6 @@ func (h *Handler) completeAppAuthExchange(w http.ResponseWriter, r *http.Request
 
 		webLauncherURLParams := launcherURLParams{
 			publicAddr:          nextRequiredApp,
-			clusterName:         h.clusterName,
 			requiredAppFQDNs:    strings.Join(requiredApps, ","),
 			requiresAppRedirect: true,
 		}
