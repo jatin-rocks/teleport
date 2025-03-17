@@ -166,8 +166,8 @@ func (h *Handler) getAppDetails(w http.ResponseWriter, r *http.Request, p httpro
 	fqdn := result.FQDN
 
 	proxyPublicAddr := utils.InferProxyPublicAddr(req.FQDNHint, h.proxyDNSNames())
-	alwaysUseProxyPublicAddr := result.App.GetAlwaysUseProxyPublicAddr()
-	if alwaysUseProxyPublicAddr {
+	useAnyProxyPublicAddr := result.App.GetUseAnyProxyPublicAddr()
+	if useAnyProxyPublicAddr {
 		appName := strings.TrimSuffix(req.FQDNHint, proxyPublicAddr)
 		fqdn = utils.AssembleAppFQDN(appName, proxyPublicAddr, clusterName, result.App)
 	}
@@ -181,7 +181,7 @@ func (h *Handler) getAppDetails(w http.ResponseWriter, r *http.Request, p httpro
 	if !isRedirectFlow {
 		for _, requiredAppName := range requiredAppNames {
 			// craft the fqdn manually so we do not have to resolve required apps
-			if alwaysUseProxyPublicAddr {
+			if useAnyProxyPublicAddr {
 				requiredAppFQDN := fmt.Sprintf("%s.%s", requiredAppName, proxyPublicAddr)
 				resp.RequiredAppFQDNs = append(resp.RequiredAppFQDNs, requiredAppFQDN)
 				continue

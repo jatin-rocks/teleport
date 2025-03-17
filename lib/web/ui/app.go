@@ -66,9 +66,9 @@ type App struct {
 	SAMLAppPreset string `json:"samlAppPreset,omitempty"`
 	// RequireRequest indicates if a returned resource is only accessible after an access request
 	RequiresRequest bool `json:"requiresRequest,omitempty"`
-	// UseProxyPublicAddrAsFQDN will rebuild this app's fqdn based on the proxy public addr that the
+	// UseAnyProxyPublicAddr will rebuild this app's fqdn based on the proxy public addr that the
 	// request originated from.
-	UseProxyPublicAddrAsFQDN bool `json:"alwaysUseProxyPublicAddr,omitempty"`
+	UseAnyProxyPublicAddr bool `json:"useAnyProxyPublicAddr,omitempty"`
 	// Integration is the integration name that must be used to access this Application.
 	// Only applicable to AWS App Access.
 	Integration string `json:"integration,omitempty"`
@@ -129,7 +129,7 @@ type MakeAppsConfig struct {
 func MakeApp(app types.Application, c MakeAppsConfig) App {
 	labels := ui.MakeLabelsWithoutInternalPrefixes(app.GetAllLabels())
 	fqdn := utils.AssembleAppFQDN(c.LocalClusterName, c.LocalProxyDNSName, c.AppClusterName, app)
-	if app.GetAlwaysUseProxyPublicAddr() {
+	if app.GetUseAnyProxyPublicAddr() {
 		proxyPublicAddr := utils.InferProxyPublicAddr(c.RequestHost, c.ProxyPublicAddrs)
 		fqdn = utils.AssembleAppFQDN(c.LocalClusterName, proxyPublicAddr, c.AppClusterName, app)
 	}
@@ -163,23 +163,23 @@ func MakeApp(app types.Application, c MakeAppsConfig) App {
 	permissionSets := makePermissionSets(app.GetIdentityCenter().GetPermissionSets())
 
 	resultApp := App{
-		Kind:                     types.KindApp,
-		SubKind:                  app.GetSubKind(),
-		Name:                     app.GetName(),
-		Description:              description,
-		URI:                      app.GetURI(),
-		PublicAddr:               app.GetPublicAddr(),
-		Labels:                   labels,
-		ClusterID:                c.AppClusterName,
-		FQDN:                     fqdn,
-		AWSConsole:               app.IsAWSConsole(),
-		FriendlyName:             types.FriendlyName(app),
-		UserGroups:               userGroupAndDescriptions,
-		SAMLApp:                  false,
-		RequiresRequest:          c.RequiresRequest,
-		Integration:              app.GetIntegration(),
-		PermissionSets:           permissionSets,
-		UseProxyPublicAddrAsFQDN: app.GetAlwaysUseProxyPublicAddr(),
+		Kind:                  types.KindApp,
+		SubKind:               app.GetSubKind(),
+		Name:                  app.GetName(),
+		Description:           description,
+		URI:                   app.GetURI(),
+		PublicAddr:            app.GetPublicAddr(),
+		Labels:                labels,
+		ClusterID:             c.AppClusterName,
+		FQDN:                  fqdn,
+		AWSConsole:            app.IsAWSConsole(),
+		FriendlyName:          types.FriendlyName(app),
+		UserGroups:            userGroupAndDescriptions,
+		SAMLApp:               false,
+		RequiresRequest:       c.RequiresRequest,
+		Integration:           app.GetIntegration(),
+		PermissionSets:        permissionSets,
+		UseAnyProxyPublicAddr: app.GetUseAnyProxyPublicAddr(),
 	}
 
 	if app.IsAWSConsole() {

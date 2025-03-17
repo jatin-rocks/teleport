@@ -26,14 +26,14 @@ function getLaunchUrl({
   fqdn,
   clusterId,
   publicAddr,
-  alwaysUseProxyPublicAddr,
+  useAnyProxyPublicAddr,
 }: {
   fqdn: string;
   clusterId: string;
-  alwaysUseProxyPublicAddr: boolean;
+  useAnyProxyPublicAddr: boolean;
   publicAddr: string;
 }) {
-  if (alwaysUseProxyPublicAddr) {
+  if (useAnyProxyPublicAddr) {
     return cfg.getAppLauncherRoute({
       fqdn,
     });
@@ -53,7 +53,7 @@ export default function makeApp(json: any): App {
     description = '',
     uri = '',
     publicAddr = '',
-    alwaysUseProxyPublicAddr = false,
+    useAnyProxyPublicAddr = false,
     clusterId = '',
     fqdn = '',
     awsConsole = false,
@@ -69,7 +69,7 @@ export default function makeApp(json: any): App {
     fqdn,
     clusterId,
     publicAddr,
-    alwaysUseProxyPublicAddr,
+    useAnyProxyPublicAddr,
   });
   const id = `${clusterId}-${name}-${publicAddr || uri}`;
   const labels = json.labels || [];
@@ -93,7 +93,7 @@ export default function makeApp(json: any): App {
       addrWithProtocol = `https://${publicAddr}`;
     }
   }
-  if (alwaysUseProxyPublicAddr) {
+  if (useAnyProxyPublicAddr) {
     addrWithProtocol = `https://${fqdn}`;
   }
   let samlAppSsoUrl = '';
@@ -107,7 +107,7 @@ export default function makeApp(json: any): App {
     id,
     name,
     description,
-    alwaysUseProxyPublicAddr,
+    useAnyProxyPublicAddr,
     uri,
     publicAddr,
     labels,
