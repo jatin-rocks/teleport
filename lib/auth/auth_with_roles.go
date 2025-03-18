@@ -1616,7 +1616,7 @@ func (a *ServerWithRoles) authContextForSearch(ctx context.Context, req *proto.L
 		return &a.context, nil
 	}
 
-	clusterName, err := a.authServer.GetClusterName()
+	clusterName, err := a.authServer.GetClusterName(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -3328,7 +3328,7 @@ func (a *ServerWithRoles) generateUserCerts(ctx context.Context, req proto.UserC
 	}
 	// add implicit roles to the set and build a checker
 	roleSet := services.NewRoleSet(parsedRoles...)
-	clusterName, err := a.GetClusterName()
+	clusterName, err := a.GetClusterName(ctx)
 	if err != nil {
 		return nil, trace.Wrap(err)
 	}
@@ -4686,11 +4686,13 @@ func (a *ServerWithRoles) DeleteClusterName() error {
 }
 
 // GetClusterName gets the name of the cluster.
-func (a *ServerWithRoles) GetClusterName(opts ...services.MarshalOption) (types.ClusterName, error) {
+// TODO(noah): Delete in V19 when the apiserver getClusterName method is also
+// deleted.
+func (a *ServerWithRoles) GetClusterName(ctx context.Context) (types.ClusterName, error) {
 	if err := a.action(types.KindClusterName, types.VerbRead); err != nil {
 		return nil, trace.Wrap(err)
 	}
-	return a.authServer.GetClusterName()
+	return a.authServer.GetClusterName(ctx)
 }
 
 // SetClusterName sets the name of the cluster. SetClusterName can only be called once.
