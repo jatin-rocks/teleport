@@ -201,6 +201,10 @@ destroy:
 lint:
 	golangci-lint run -c ../../.golangci.yml
 
+.PHONY: fmt
+fmt:
+	terraform fmt -no-color -recursive
+
 .PHONY: docs
-docs: gen-tfschema install
+docs: gen-tfschema install fmt
 	./gen/docs.sh $(VERSION)
