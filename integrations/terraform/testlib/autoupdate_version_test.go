@@ -18,12 +18,14 @@ package testlib
 
 import (
 	"context"
-	autoupdatev1pb "github.com/gravitational/teleport/api/gen/proto/go/teleport/autoupdate/v1"
-	"github.com/gravitational/teleport/api/types/autoupdate"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/require"
-	"time"
+
+	autoupdatev1pb "github.com/gravitational/teleport/api/gen/proto/go/teleport/autoupdate/v1"
+	"github.com/gravitational/teleport/api/types/autoupdate"
 )
 
 func (s *TerraformSuiteOSS) TestAutoUpdateVersion() {
